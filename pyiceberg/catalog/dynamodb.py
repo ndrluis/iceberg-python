@@ -28,16 +28,8 @@ from typing import (
 
 import boto3
 
-from pyiceberg.catalog import (
-    ICEBERG,
-    METADATA_LOCATION,
-    PREVIOUS_METADATA_LOCATION,
-    TABLE_TYPE,
-    Catalog,
-    Identifier,
-    Properties,
-    PropertiesUpdateSummary,
-)
+from pyiceberg.catalog import Catalog
+from pyiceberg.catalog._catalog import ICEBERG, METADATA_LOCATION, PREVIOUS_METADATA_LOCATION, TABLE_TYPE, PropertiesUpdateSummary
 from pyiceberg.exceptions import (
     ConditionalCheckFailedException,
     GenericDynamoDbError,
@@ -56,7 +48,7 @@ from pyiceberg.serializers import FromInputFile
 from pyiceberg.table import CommitTableRequest, CommitTableResponse, Table
 from pyiceberg.table.metadata import new_table_metadata
 from pyiceberg.table.sorting import UNSORTED_SORT_ORDER, SortOrder
-from pyiceberg.typedef import EMPTY_DICT
+from pyiceberg.typedef import EMPTY_DICT, Identifier, Properties
 
 if TYPE_CHECKING:
     import pyarrow as pa

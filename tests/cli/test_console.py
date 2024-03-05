@@ -33,7 +33,7 @@ from tests.catalog.test_base import InMemoryCatalog
 def test_missing_uri(mocker: MockFixture, empty_home_dir_path: str) -> None:
     # mock to prevent parsing ~/.pyiceberg.yaml or {PYICEBERG_HOME}/.pyiceberg.yaml
     mocker.patch.dict(os.environ, values={"HOME": empty_home_dir_path, "PYICEBERG_HOME": empty_home_dir_path})
-    mocker.patch("pyiceberg.catalog._ENV_CONFIG", return_value=Config())
+    mocker.patch("pyiceberg.catalog._catalog._ENV_CONFIG", return_value=Config())
 
     runner = CliRunner()
     result = runner.invoke(run, ["list"])

@@ -41,13 +41,8 @@ from sqlalchemy.orm import (
     mapped_column,
 )
 
-from pyiceberg.catalog import (
-    METADATA_LOCATION,
-    Catalog,
-    Identifier,
-    Properties,
-    PropertiesUpdateSummary,
-)
+from pyiceberg.catalog import Catalog
+from pyiceberg.catalog._catalog import METADATA_LOCATION, Identifier, Properties, PropertiesUpdateSummary
 from pyiceberg.exceptions import (
     CommitFailedException,
     NamespaceAlreadyExistsError,

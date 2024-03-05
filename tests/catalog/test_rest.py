@@ -23,7 +23,8 @@ import pytest
 from requests_mock import Mocker
 
 import pyiceberg
-from pyiceberg.catalog import PropertiesUpdateSummary, Table, load_catalog
+from pyiceberg.catalog import load_catalog
+from pyiceberg.catalog._catalog import PropertiesUpdateSummary
 from pyiceberg.catalog.rest import AUTH_URL, RestCatalog
 from pyiceberg.exceptions import (
     AuthorizationExpiredError,
@@ -36,6 +37,7 @@ from pyiceberg.exceptions import (
 from pyiceberg.io import load_file_io
 from pyiceberg.partitioning import PartitionField, PartitionSpec
 from pyiceberg.schema import Schema
+from pyiceberg.table import Table
 from pyiceberg.table.metadata import TableMetadataV1
 from pyiceberg.table.sorting import SortField, SortOrder
 from pyiceberg.transforms import IdentityTransform, TruncateTransform
@@ -998,7 +1000,7 @@ EXAMPLE_ENV = {"PYICEBERG_CATALOG__PRODUCTION__URI": TEST_URI}
 
 
 @mock.patch.dict(os.environ, EXAMPLE_ENV)
-@mock.patch("pyiceberg.catalog.Config.get_catalog_config")
+@mock.patch("pyiceberg.utils.config.Config.get_catalog_config")
 def test_catalog_from_environment_variables(catalog_config_mock: mock.Mock, rest_mock: Mocker) -> None:
     env_config: RecursiveDict = Config._from_environment_variables({})
     catalog_config_mock.return_value = cast(RecursiveDict, env_config.get("catalog")).get("production")
@@ -1007,7 +1009,7 @@ def test_catalog_from_environment_variables(catalog_config_mock: mock.Mock, rest
 
 
 @mock.patch.dict(os.environ, EXAMPLE_ENV)
-@mock.patch("pyiceberg.catalog._ENV_CONFIG.get_catalog_config")
+@mock.patch("pyiceberg.catalog._catalog._ENV_CONFIG.get_catalog_config")
 def test_catalog_from_environment_variables_override(catalog_config_mock: mock.Mock, rest_mock: Mocker) -> None:
     rest_mock.get(
         "https://other-service.io/api/v1/config",

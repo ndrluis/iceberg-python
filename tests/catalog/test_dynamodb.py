@@ -22,7 +22,7 @@ import pyarrow as pa
 import pytest
 from moto import mock_aws
 
-from pyiceberg.catalog import METADATA_LOCATION, TABLE_TYPE
+from pyiceberg.catalog._catalog import METADATA_LOCATION, TABLE_TYPE
 from pyiceberg.catalog.dynamodb import (
     ACTIVE,
     DYNAMODB_COL_CREATED_AT,

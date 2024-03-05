@@ -22,7 +22,8 @@ from typing import (
     Union,
 )
 
-from pyiceberg.catalog import Catalog, PropertiesUpdateSummary
+from pyiceberg.catalog import Catalog
+from pyiceberg.catalog._catalog import PropertiesUpdateSummary
 from pyiceberg.partitioning import UNPARTITIONED_PARTITION_SPEC, PartitionSpec
 from pyiceberg.schema import Schema
 from pyiceberg.table import (

@@ -36,7 +36,7 @@ from fsspec import AbstractFileSystem
 from fsspec.implementations.local import LocalFileSystem
 from requests import HTTPError
 
-from pyiceberg.catalog import TOKEN
+from pyiceberg.catalog._catalog import TOKEN
 from pyiceberg.exceptions import SignError
 from pyiceberg.io import (
     GCS_ACCESS,
