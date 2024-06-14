@@ -32,6 +32,7 @@ from pyiceberg.exceptions import (
     NoSuchTableError,
     OAuthError,
     TableAlreadyExistsError,
+    NoSuchIdentifierError,
 )
 from pyiceberg.io import load_file_io
 from pyiceberg.partitioning import PartitionField, PartitionSpec
@@ -1079,7 +1080,7 @@ def test_delete_table_404(rest_mock: Mocker) -> None:
 
 def test_create_table_missing_namespace(rest_mock: Mocker, table_schema_simple: Schema) -> None:
     table = "table"
-    with pytest.raises(NoSuchTableError) as e:
+    with pytest.raises(NoSuchIdentifierError) as e:
         # Missing namespace
         RestCatalog("rest", uri=TEST_URI, token=TEST_TOKEN).create_table(table, table_schema_simple)
     assert f"Missing namespace or invalid identifier: {table}" in str(e.value)
@@ -1087,7 +1088,7 @@ def test_create_table_missing_namespace(rest_mock: Mocker, table_schema_simple: 
 
 def test_load_table_invalid_namespace(rest_mock: Mocker) -> None:
     table = "table"
-    with pytest.raises(NoSuchTableError) as e:
+    with pytest.raises(NoSuchIdentifierError) as e:
         # Missing namespace
         RestCatalog("rest", uri=TEST_URI, token=TEST_TOKEN).load_table(table)
     assert f"Missing namespace or invalid identifier: {table}" in str(e.value)
@@ -1095,7 +1096,7 @@ def test_load_table_invalid_namespace(rest_mock: Mocker) -> None:
 
 def test_drop_table_invalid_namespace(rest_mock: Mocker) -> None:
     table = "table"
-    with pytest.raises(NoSuchTableError) as e:
+    with pytest.raises(NoSuchIdentifierError) as e:
         # Missing namespace
         RestCatalog("rest", uri=TEST_URI, token=TEST_TOKEN).drop_table(table)
     assert f"Missing namespace or invalid identifier: {table}" in str(e.value)
@@ -1103,7 +1104,7 @@ def test_drop_table_invalid_namespace(rest_mock: Mocker) -> None:
 
 def test_purge_table_invalid_namespace(rest_mock: Mocker) -> None:
     table = "table"
-    with pytest.raises(NoSuchTableError) as e:
+    with pytest.raises(NoSuchIdentifierError) as e:
         # Missing namespace
         RestCatalog("rest", uri=TEST_URI, token=TEST_TOKEN).purge_table(table)
     assert f"Missing namespace or invalid identifier: {table}" in str(e.value)
