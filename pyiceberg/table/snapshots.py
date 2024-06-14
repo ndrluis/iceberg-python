@@ -427,3 +427,9 @@ def ancestors_of(current_snapshot: Optional[Snapshot], table_metadata: TableMeta
         if snapshot.parent_snapshot_id is None:
             break
         snapshot = table_metadata.snapshot_by_id(snapshot.parent_snapshot_id)
+
+
+def ancestors_ids(current_snapshot: Optional[Snapshot], table_metadata: TableMetadata) -> Iterable[int]:
+    """Get the ids of the ancestors of and including the given snapshot."""
+    for snapshot in ancestors_of(current_snapshot, table_metadata):
+        yield snapshot.snapshot_id

@@ -113,6 +113,7 @@ from pyiceberg.table.snapshots import (
     SnapshotLogEntry,
     SnapshotSummaryCollector,
     Summary,
+    ancestors_ids,
     update_snapshot_summaries,
 )
 from pyiceberg.table.sorting import UNSORTED_SORT_ORDER, SortOrder
@@ -3826,6 +3827,38 @@ class InspectTable:
             manifests,
             schema=manifest_schema,
         )
+
+    def history(self) -> "pa.Table":
+        import pyarrow as pa
+
+        history_schema = pa.schema([
+            pa.field("made_current_at", pa.timestamp(unit="ms"), nullable=False),
+            pa.field("snapshot_id", pa.int64(), nullable=False),
+            pa.field("parent_id", pa.int64(), nullable=True),
+            pa.field("is_current_ancestor", pa.bool_(), nullable=False),
+        ])
+
+        ancestor_ids = set(
+            ancestors_ids(
+                self.tbl.current_snapshot(),
+                self.tbl.metadata,
+            )
+        )
+
+        history = []
+        metadata = self.tbl.metadata
+
+        for snapshot_entry in metadata.snapshot_log:
+            snapshot = metadata.snapshot_by_id(snapshot_entry.snapshot_id)
+
+            history.append({
+                "made_current_at": datetime.utcfromtimestamp(snapshot_entry.timestamp_ms / 1000.0),
+                "snapshot_id": snapshot_entry.snapshot_id,
+                "parent_id": snapshot.parent_snapshot_id if snapshot else None,
+                "is_current_ancestor": snapshot_entry.snapshot_id in ancestor_ids,
+            })
+
+        return pa.Table.from_pylist(history, schema=history_schema)
 
 
 @dataclass(frozen=True)

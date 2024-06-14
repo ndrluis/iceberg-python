@@ -76,6 +76,7 @@ from pyiceberg.table.snapshots import (
     Snapshot,
     SnapshotLogEntry,
     Summary,
+    ancestors_ids,
     ancestors_of,
 )
 from pyiceberg.table.sorting import (
@@ -254,6 +255,13 @@ def test_ancestors_of_recursive_error(table_v2_with_extensive_snapshots: Table) 
         )
         == 2000
     )
+
+
+def test_ancestors_ids(table_v2: Table) -> None:
+    assert list(ancestors_ids(table_v2.current_snapshot(), table_v2.metadata)) == [
+        3055729675574597004,
+        3051729675574597004,
+    ]
 
 
 def test_snapshot_by_id_does_not_exist(table_v2: Table) -> None:
