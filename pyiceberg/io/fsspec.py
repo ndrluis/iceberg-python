@@ -50,6 +50,13 @@ from pyiceberg.io import (
     AWS_REGION,
     AWS_SECRET_ACCESS_KEY,
     AWS_SESSION_TOKEN,
+    DEPRECATED_ADLFS_ACCOUNT_KEY,
+    DEPRECATED_ADLFS_ACCOUNT_NAME,
+    DEPRECATED_ADLFS_CLIENT_ID,
+    DEPRECATED_ADLFS_CONNECTION_STRING,
+    DEPRECATED_ADLFS_PREFIX,
+    DEPRECATED_ADLFS_SAS_TOKEN,
+    DEPRECATED_ADLFS_TENANT_ID,
     GCS_ACCESS,
     GCS_CACHE_TIMEOUT,
     GCS_CONSISTENCY,
@@ -69,13 +76,16 @@ from pyiceberg.io import (
     S3_SESSION_TOKEN,
     S3_SIGNER_URI,
     ADLFS_ClIENT_SECRET,
+    DEPRECATED_ADLFS_ClIENT_SECRET,
     FileIO,
     InputFile,
     InputStream,
     OutputFile,
     OutputStream,
 )
+from pyiceberg.table import PropertyUtil
 from pyiceberg.typedef import Properties
+from pyiceberg.utils.deprecated import deprecated
 
 logger = logging.getLogger(__name__)
 
@@ -176,14 +186,50 @@ def _gs(properties: Properties) -> AbstractFileSystem:
 def _adlfs(properties: Properties) -> AbstractFileSystem:
     from adlfs import AzureBlobFileSystem
 
+    for property_name in properties:
+        if property_name.startswith(DEPRECATED_ADLFS_PREFIX):
+            deprecated(
+                deprecated_in="0.7.0",
+                removed_in="0.8.0",
+                help_message=f"The property {property_name} is deprecated. Please use properties that start with adls.",
+            )(lambda: None)()
+
     return AzureBlobFileSystem(
-        connection_string=properties.get(ADLFS_CONNECTION_STRING),
-        account_name=properties.get(ADLFS_ACCOUNT_NAME),
-        account_key=properties.get(ADLFS_ACCOUNT_KEY),
-        sas_token=properties.get(ADLFS_SAS_TOKEN),
-        tenant_id=properties.get(ADLFS_TENANT_ID),
-        client_id=properties.get(ADLFS_CLIENT_ID),
-        client_secret=properties.get(ADLFS_ClIENT_SECRET),
+        connection_string=PropertyUtil.get_first_property_value(
+            properties,
+            ADLFS_CONNECTION_STRING,
+            DEPRECATED_ADLFS_CONNECTION_STRING,
+        ),
+        account_name=PropertyUtil.get_first_property_value(
+            properties,
+            ADLFS_ACCOUNT_NAME,
+            DEPRECATED_ADLFS_ACCOUNT_NAME,
+        ),
+        account_key=PropertyUtil.get_first_property_value(
+            properties,
+            ADLFS_ACCOUNT_KEY,
+            DEPRECATED_ADLFS_ACCOUNT_KEY,
+        ),
+        sas_token=PropertyUtil.get_first_property_value(
+            properties,
+            ADLFS_SAS_TOKEN,
+            DEPRECATED_ADLFS_SAS_TOKEN,
+        ),
+        tenant_id=PropertyUtil.get_first_property_value(
+            properties,
+            ADLFS_TENANT_ID,
+            DEPRECATED_ADLFS_TENANT_ID,
+        ),
+        client_id=PropertyUtil.get_first_property_value(
+            properties,
+            ADLFS_CLIENT_ID,
+            DEPRECATED_ADLFS_CLIENT_ID,
+        ),
+        client_secret=PropertyUtil.get_first_property_value(
+            properties,
+            ADLFS_ClIENT_SECRET,
+            DEPRECATED_ADLFS_ClIENT_SECRET,
+        ),
     )
 
 
