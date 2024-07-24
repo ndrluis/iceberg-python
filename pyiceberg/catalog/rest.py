@@ -63,6 +63,7 @@ from pyiceberg.table import (
     CommitTableRequest,
     CommitTableResponse,
     CreateTableTransaction,
+    PropertyUtil,
     StagedTable,
     Table,
     TableIdentifier,
@@ -71,6 +72,7 @@ from pyiceberg.table.metadata import TableMetadata
 from pyiceberg.table.sorting import UNSORTED_SORT_ORDER, SortOrder, assign_fresh_sort_order_ids
 from pyiceberg.typedef import EMPTY_DICT, UTF8, IcebergBaseModel, Identifier, Properties
 from pyiceberg.types import transform_dict_value_to_str
+from pyiceberg.utils.deprecated import deprecated
 
 if TYPE_CHECKING:
     import pyarrow as pa
@@ -118,7 +120,8 @@ SSL = "ssl"
 SIGV4 = "rest.sigv4-enabled"
 SIGV4_REGION = "rest.signing-region"
 SIGV4_SERVICE = "rest.signing-name"
-AUTH_URL = "rest.authorization-url"
+DEPRECATED_AUTH_URL = "rest.authorization-url"
+OAUTH2_SERVER_URI = "oauth2-server-uri"
 HEADER_PREFIX = "header."
 
 NAMESPACE_SEPARATOR = b"\x1f".decode(UTF8)
@@ -290,7 +293,14 @@ class RestCatalog(Catalog):
 
     @property
     def auth_url(self) -> str:
-        if url := self.properties.get(AUTH_URL):
+        if self.properties.get(DEPRECATED_AUTH_URL):
+            deprecated(
+                deprecated_in="0.7.0",
+                removed_in="0.8.0",
+                help_message=f"The property {DEPRECATED_AUTH_URL} is deprecated. Please use {OAUTH2_SERVER_URI} instead",
+            )(lambda: None)()
+
+        if url := PropertyUtil.get_first_property_value(self.properties, DEPRECATED_AUTH_URL, OAUTH2_SERVER_URI):
             return url
         else:
             return self.url(Endpoints.get_token, prefixed=False)
