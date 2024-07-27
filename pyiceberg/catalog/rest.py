@@ -353,6 +353,7 @@ class RestCatalog(Catalog):
         return identifier_tuple
 
     def _split_identifier_for_path(self, identifier: Union[str, Identifier, TableIdentifier]) -> Properties:
+        print("Split")
         if isinstance(identifier, TableIdentifier):
             if identifier.namespace.root[0] == self.name:
                 return {"namespace": NAMESPACE_SEPARATOR.join(identifier.namespace.root[1:]), "table": identifier.name}
@@ -679,12 +680,14 @@ class RestCatalog(Catalog):
         return self.load_table(to_identifier)
 
     def _remove_catalog_name_from_table_request_identifier(self, table_request: CommitTableRequest) -> CommitTableRequest:
+        print(table_request.identifier.namespace.root[1:])
+        print(table_request.identifier.name)
         if table_request.identifier.namespace.root[0] == self.name:
             return table_request.model_copy(
                 update={
                     "identifier": TableIdentifier(
                         namespace=table_request.identifier.namespace.root[1:], name=table_request.identifier.name
-                    ).model_dump()
+                    )
                 }
             )
         return table_request
