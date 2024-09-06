@@ -1,14 +1,20 @@
-from typing import TYPE_CHECKING, Any, Callable, Dict
+from typing import TYPE_CHECKING, Any, Callable, Dict, List
 
 from pydantic import Field
 
 from pyiceberg.manifest import DataFileContent
 from pyiceberg.table import Table
-from pyiceberg.table.refs import SnapshotRef
+from pyiceberg.table.refs import SnapshotRef, SnapshotRefType
 from pyiceberg.typedef import IcebergBaseModel
+from pyiceberg.snapshot import ancestors_of
+import time
+import logging
 
 if TYPE_CHECKING:
     pass
+
+
+logger = logging.getLogger(__name__)
 
 
 class DeleteSummary(IcebergBaseModel):
@@ -60,16 +66,29 @@ class ExpireSnashots:
         self.opts = {**self.DEFAULT_OPTS, **opts}
         self.delete_with = delete_with
         self.default_max_ref_age_ms = 0
-        self.now = 0
+        # now in java
+        self.procedure_started_at_ms = int(time.time() * 1000)
 
     def collect(self):
         if len(self.expired_snapshots) > 0:
             self.expired_snapshots = []
 
         ids_to_retain = set()
-        retained_refs = self.table.metadata.refs
+        retained_id_to_refs: Dict[int, List[str]] = {}
+        refs: Dict[str, SnapshotRef] = self.table.metadata.refs
 
-        compute_retained_refs = self.compute_retained_refs(retained_refs)
+        retained_refs = self.compute_retained_refs(refs)
+
+        for name, ref in retained_refs.items():
+            snapshot_id: int = ref.snapshot_id
+
+            if snapshot_id not in retained_id_to_refs:
+                retained_id_to_refs[snapshot_id] = []
+
+            retained_id_to_refs[snapshot_id] = name
+            ids_to_retain = ids_to_retain | {snapshot_id}
+
+        ids_to_retain = ids_to_retain | self.compute_all_branch_snapshots_to_retain(refs)
 
         return self
 
@@ -86,7 +105,7 @@ class ExpireSnashots:
             max_ref_age_ms = ref.max_ref_age_ms or self.default_max_ref_age_ms
 
             if snapshot is not None:
-                ref_age_ms = self.now - snapshot.timestamp_ms
+                ref_age_ms = self.procedure_started_at_ms - snapshot.timestamp_ms
 
                 if ref_age_ms <= max_ref_age_ms:
                     retained_refs[name] = ref
@@ -94,6 +113,42 @@ class ExpireSnashots:
                 logger.warning(f"Snapshot {ref.snapshot_id} not found for reference {name}")
 
         return retained_refs
+
+    def compute_all_branch_snapshots_to_retain(self, refs: Dict[str, SnapshotRef]):
+        ids_to_retain = set()
+
+        for _, ref in refs.items():
+            if ref.snapshot_ref_type == SnapshotRefType.BRANCH:
+                if ref.max_snapshot_age_ms is not None:
+                    expire_snapshots_orlder_than = self.procedure_started_at_ms - ref.max_snapshot_age_ms
+                else:
+                    expire_snapshots_orlder_than = self.default_expire_older_than
+
+                min_snapshots_to_keep = ref.min_snapshots_to_keep or self.default_min_num_snapshots
+
+                ids_to_retain = ids_to_retain | self.compute_branch_snapshots_to_retain(
+                    ref.snapshot_id,
+                    expire_snapshots_orlder_than,
+                    min_snapshots_to_keep,
+                )
+
+        return ids_to_retain
+
+    def compute_branch_snapshots_to_retain(
+        self,
+        snapshot_id: int,
+        expire_snapshots_older_than: int,
+        min_snapshots_to_keep: int,
+    ):
+        ids_to_retain = set()
+
+        for ancestor in ancestors_of(self.table.snapshot_by_id(snapshot_id)):
+            if len(ids_to_retain) < min_snapshots_to_keep or ancestor.timestamp_ms >= expire_snapshots_older_than:
+                ids_to_retain = ids_to_retain | {ancestor.snapshot_id}
+            else:
+                return ids_to_retain
+
+        return ids_to_retain
 
     def execute(self):
         return self
